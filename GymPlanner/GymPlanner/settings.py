@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'trainer',
     'django_extensions',
     'django_filters',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
