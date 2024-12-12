@@ -4,11 +4,16 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from django.views.decorators.cache import cache_page
 from .models import Trainer
 from .serializers import TrainerSerializer
+from .filters import TrainerFilters
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class TrainerView(viewsets.ModelViewSet):
     queryset = Trainer.objects.all()
     serializer_class = TrainerSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TrainerFilters
+
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
