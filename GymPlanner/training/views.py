@@ -17,34 +17,80 @@ class TrainingViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         user = self.request.user
-        if (
-                user and hasattr(user, 'role')
-                and user.role in ['client', 'trainer']
-                and self.action in ['list', 'retrieve']
-        ):
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            if hasattr(user, 'role') and user.role == 'trainer':
+                return [IsTrainer()]
         return [IsAdminUser()]
 
 
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
-    permission_classes = [IsTrainer, IsAdminUser]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAdminUser(), IsTrainer()]
 
 
 class TrainingPlanViewSet(viewsets.ModelViewSet):
     queryset = TrainingPlan.objects.all()
     serializer_class = TrainingPlanSerializer
-    permission_classes = [IsTrainer, IsClient, IsAdminUser]
+
+    def get_permissions(self):
+        user = self.request.user
+        if self.action in ['list', 'retrieve']:
+            return [IsTrainer() | IsAdminUser() | IsClient()]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            if hasattr(user, 'role') and user.role == 'trainer':
+                return [IsTrainer()]
+        return [IsAdminUser()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['client', 'trainer']:
+            return self.queryset.filter(user=user)
+        return self.queryset
 
 
 class TrainingResultViewSet(viewsets.ModelViewSet):
     queryset = TrainingResult.objects.all()
     serializer_class = TrainingResultSerializer
-    permission_classes = [IsTrainer, IsClient, IsAdminUser]
+
+    def get_permissions(self):
+        user = self.request.user
+        if self.action in ['list', 'retrieve']:
+            return [IsTrainer(), IsAdminUser(), IsClient()]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            if hasattr(user, 'role') and user.role == 'trainer':
+                return [IsTrainer()]
+        return [IsAdminUser()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['client', 'trainer']:
+            return self.queryset.filter(user=user)
+        return self.queryset
+
 
 
 class ReminderViewSet(viewsets.ModelViewSet):
     queryset = Reminder.objects.all()
     serializer_class = ReminderSerializer
-    permission_classes = [IsTrainer, IsClient, IsAdminUser]
+
+    def get_permissions(self):
+        user = self.request.user
+        if self.action in ['list', 'retrieve']:
+            return [IsTrainer(), IsAdminUser(), IsClient()]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            if hasattr(user, 'role') and user.role == 'trainer':
+                return [IsTrainer()]
+        return [IsAdminUser()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['client', 'trainer']:
+            return self.queryset.filter(user=user)
+        return self.queryset
