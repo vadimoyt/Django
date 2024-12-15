@@ -1,14 +1,11 @@
-
-
-from rest_framework.reverse import reverse
-
-from rest_framework.test import APITestCase
-from trainer.models import Trainer
 from rest_framework import status
+from rest_framework.reverse import reverse
+from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
+from trainer.models import Trainer
 from training.models import Training, Exercise
 from user.models import CustomUser
-from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class TrainerTests(APITestCase):
@@ -55,15 +52,24 @@ class TrainerTests(APITestCase):
 
     def test_get_list_of_trainers(self):
         url = reverse('trainer-list')
-        response_admin = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {self.access_token_admin}')
-        response_user = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {self.access_token_user}')
+        response_admin = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token_admin}'
+        )
+        response_user = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token_user}'
+        )
         self.assertEqual(response_admin.status_code, 200)
         self.assertEqual(response_user.status_code, 200)
         self.assertEqual(len(list(response_admin)), 1)
         self.assertEqual(len(list(response_user)), 1)
 
     def test_only_admin_can_update_trainer(self):
-        update_url = reverse('trainer-detail', kwargs={'pk':self.trainer.pk})
+        update_url = reverse(
+            'trainer-detail',
+            kwargs={'pk':self.trainer.pk}
+        )
         response_admin = self.client.patch(
             update_url,
             {'first_name': 'Vitaly'},
@@ -187,7 +193,10 @@ class TrainingViewSetTest(APITestCase):
             update_url, {'title': 'New title'},
             HTTP_AUTHORIZATION=f'Bearer {self.access_token_client}'
         )
-        response_unauth_update = self.client.patch(update_url, {'title': 'New title'})
+        response_unauth_update = self.client.patch(
+            update_url,
+            {'title': 'New title'}
+        )
         self.assertEqual(response_admin_update.status_code, 200)
         self.assertEqual(response_client_update.status_code, 403)
         self.assertEqual(response_unauth_update.status_code, 401)

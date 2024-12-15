@@ -17,7 +17,11 @@ class TrainingViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         user = self.request.user
-        if user and hasattr(user, 'role') and user.role in ['client', 'trainer'] and self.action in ['list', 'retrieve']:
+        if (
+                user and hasattr(user, 'role')
+                and user.role in ['client', 'trainer']
+                and self.action in ['list', 'retrieve']
+        ):
             return [AllowAny()]
         return [IsAdminUser()]
 

@@ -41,8 +41,15 @@ class Training(models.Model):
         max_length=250,
         null=False
     )
-    trainer = models.ForeignKey(Trainer, on_delete=CASCADE, null=False)
-    public = models.BooleanField(default=True, verbose_name='Is training is public?')
+    trainer = models.ForeignKey(
+        Trainer,
+        on_delete=CASCADE,
+        null=False
+    )
+    public = models.BooleanField(
+        default=True,
+        verbose_name='Is training is public?'
+    )
 
     def __str__(self):
         return (
@@ -58,9 +65,21 @@ class Training(models.Model):
 
 
 class Exercise(models.Model):
-    training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='exercises', verbose_name='training', null=True)
-    title = models.CharField(max_length=20, null=False)
-    description = models.TextField(max_length=1500, null=False)
+    training = models.ForeignKey(
+        Training,
+        on_delete=models.CASCADE,
+        related_name='exercises',
+        verbose_name='training',
+        null=True
+    )
+    title = models.CharField(
+        max_length=20,
+        null=False
+    )
+    description = models.TextField(
+        max_length=1500,
+        null=False
+    )
     amount_sets = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         null=False
@@ -75,11 +94,24 @@ class Exercise(models.Model):
 
 
 class TrainingPlan(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='training_plans', verbose_name='User')
-    training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='assigned_plan', verbose_name='Training')
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='training_plans',
+        verbose_name='User'
+    )
+    training = models.ForeignKey(
+        Training,
+        on_delete=models.CASCADE,
+        related_name='assigned_plan',
+        verbose_name='Training'
+    )
     start_date = models.DateField(verbose_name='Date of the beginning')
     end_date = models.DateField(verbose_name='Date of end')
-    complete = models.BooleanField(default=False, verbose_name='Is completed?')
+    complete = models.BooleanField(
+        default=False,
+        verbose_name='Is completed?'
+    )
 
     def clean(self):
         if self.start_date >= self.end_date:
@@ -90,12 +122,29 @@ class TrainingPlan(models.Model):
 
 
 class TrainingResult(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='training_result', verbose_name='User')
-    training = models.ForeignKey(Training, on_delete=models.CASCADE, verbose_name='Training')
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='training_result',
+        verbose_name='User'
+    )
+    training = models.ForeignKey(
+        Training,
+        on_delete=models.CASCADE,
+        verbose_name='Training'
+    )
     date = models.DateField(verbose_name='Date of training')
-    notes = models.TextField(blank=True, verbose_name='Notes')
+    notes = models.TextField(
+        blank=True,
+        verbose_name='Notes'
+    )
     duration_minutes = models.PositiveSmallIntegerField(verbose_name='Duration of training in minutes')
-    burned_calories = models.PositiveIntegerField(verbose_name='Burned calories', blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(5000)])
+    burned_calories = models.PositiveIntegerField(
+        verbose_name='Burned calories',
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(0), MaxValueValidator(5000)]
+    )
 
     def __str__(self):
         return f'Result of {self.user.username} - for {self.training.title} on {self.date}'
@@ -114,7 +163,10 @@ class Reminder(models.Model):
         verbose_name="Training"
     )
     remind_at = models.DateTimeField(verbose_name="Date and time of reminder")
-    sent = models.BooleanField(default=False, verbose_name="Has remind sent?")
+    sent = models.BooleanField(
+        default=False,
+        verbose_name="Has remind sent?"
+    )
 
     def __str__(self):
         return f"Reminder for {self.user.username} about {self.training.title} at {self.remind_at}"
