@@ -1,12 +1,15 @@
+from django.contrib.admin import action
+from django.db.models import Sum
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.response import Response
 
+from .filters import TrainingFilter
 from .models import Training, Exercise, TrainingPlan, TrainingResult, Reminder
 from .permissions import IsTrainer, IsClient
 from .serializers import TrainingSerializer, ExerciseSerializer, TrainingResultSerializer, ReminderSerializer, \
     TrainingPlanSerializer
-from django_filters.rest_framework import DjangoFilterBackend
-from .filters import TrainingFilter
 
 
 class TrainingViewSet(viewsets.ModelViewSet):
@@ -42,10 +45,10 @@ class TrainingPlanViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         user = self.request.user
         if self.action in ['list', 'retrieve']:
-            return [IsTrainer() | IsAdminUser() | IsClient()]
+            return [IsTrainer | IsAdminUser | IsClient]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
-            if hasattr(user, 'role') and user.role == 'trainer':
-                return [IsTrainer()]
+            if hasattr(user, 'role') and user.role in ['trainer', 'client']:
+                return [IsTrainer | IsClient]
         return [IsAdminUser()]
 
     def get_queryset(self):
@@ -62,10 +65,10 @@ class TrainingResultViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         user = self.request.user
         if self.action in ['list', 'retrieve']:
-            return [IsTrainer(), IsAdminUser(), IsClient()]
+            return [IsTrainer | IsAdminUser | IsClient]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
-            if hasattr(user, 'role') and user.role == 'trainer':
-                return [IsTrainer()]
+            if hasattr(user, 'role') and user.role in ['trainer', 'client']:
+                return [IsTrainer | IsClient]
         return [IsAdminUser()]
 
     def get_queryset(self):
@@ -73,6 +76,19 @@ class TrainingResultViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'role') and user.role in ['client', 'trainer']:
             return self.queryset.filter(user=user)
         return self.queryset
+
+    @action(detail=False, methods=['get'])
+    def stat(self, request):
+        user = request.user
+        queryset = TrainingResult.objects.filter(user=user)
+        total_trainings = queryset.count()
+        total_duration = queryset.aggregate(Sum('duration_minutes'))['duration_minutes__sum'] or 0
+        total_burned_calories = queryset.aggregate(Sum('burned_calories'))['burned_calories__sum'] or 0
+        return Response({
+            'total_trainings': total_trainings,
+            'total_duration': total_duration,
+            'total_burned_calories': total_burned_calories,
+        })
 
 
 
