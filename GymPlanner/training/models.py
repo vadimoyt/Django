@@ -54,12 +54,6 @@ class Training(models.Model):
     def __str__(self):
         return (
             f"Training: {self.title}. "
-            f"Type: {self.type}. "
-            f"Level: {self.level}. "
-            f"Duration(days): {self.duration}. "
-            f"Description: {self.description}. "
-            f"Exercise: {' '.join([exercise.title for exercise in self.exercises.all()])}. "
-            f"Trainer: {self.trainer.first_name}"
         )
 
 

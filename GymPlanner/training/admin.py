@@ -10,6 +10,8 @@ class TrainingAdmin(admin.ModelAdmin):
         return ', '.join([exercises.title for exercises in obj.exercises.all()])
 
     get_exercises.short_description = 'Exercises'
+
+
 admin.site.register(Exercise)
 admin.site.register(TrainingPlan)
 admin.site.register(TrainingResult)

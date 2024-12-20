@@ -1,13 +1,13 @@
-from django.contrib.admin import action
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 
+from GymPlanner.permissions import IsTrainer, IsClient
 from .filters import TrainingFilter
 from .models import Training, Exercise, TrainingPlan, TrainingResult, Reminder
-from .permissions import IsTrainer, IsClient
 from .serializers import TrainingSerializer, ExerciseSerializer, TrainingResultSerializer, ReminderSerializer, \
     TrainingPlanSerializer
 
@@ -35,7 +35,8 @@ class ExerciseViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
-        return [IsAdminUser(), IsTrainer()]
+        return [permission() for permission in [IsAdminUser, IsTrainer]
+                if permission().has_permission(self.request, self)]
 
 
 class TrainingPlanViewSet(viewsets.ModelViewSet):
@@ -45,10 +46,12 @@ class TrainingPlanViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         user = self.request.user
         if self.action in ['list', 'retrieve']:
-            return [IsTrainer | IsAdminUser | IsClient]
+            return [permission() for permission in [IsTrainer, IsAdminUser, IsClient]
+                    if permission().has_permission(self.request, self)]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             if hasattr(user, 'role') and user.role in ['trainer', 'client']:
-                return [IsTrainer | IsClient]
+                return [permission() for permission in [IsClient, IsTrainer]
+                        if permission().has_permission(self.request, self)]
         return [IsAdminUser()]
 
     def get_queryset(self):
@@ -65,10 +68,12 @@ class TrainingResultViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         user = self.request.user
         if self.action in ['list', 'retrieve']:
-            return [IsTrainer | IsAdminUser | IsClient]
+            return [permission() for permission in [IsTrainer, IsAdminUser, IsClient]
+                    if permission().has_permission(self.request, self)]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             if hasattr(user, 'role') and user.role in ['trainer', 'client']:
-                return [IsTrainer | IsClient]
+                return [permission() for permission in [IsClient, IsTrainer]
+                        if permission().has_permission(self.request, self)]
         return [IsAdminUser()]
 
     def get_queryset(self):
@@ -84,12 +89,15 @@ class TrainingResultViewSet(viewsets.ModelViewSet):
         total_trainings = queryset.count()
         total_duration = queryset.aggregate(Sum('duration_minutes'))['duration_minutes__sum'] or 0
         total_burned_calories = queryset.aggregate(Sum('burned_calories'))['burned_calories__sum'] or 0
+        avg_calories_per_minute = (
+                total_burned_calories / total_duration if total_duration else 0
+        )
         return Response({
             'total_trainings': total_trainings,
             'total_duration': total_duration,
             'total_burned_calories': total_burned_calories,
+            'avg_calories_per_minute': avg_calories_per_minute
         })
-
 
 
 class ReminderViewSet(viewsets.ModelViewSet):
@@ -99,7 +107,8 @@ class ReminderViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         user = self.request.user
         if self.action in ['list', 'retrieve']:
-            return [IsTrainer(), IsAdminUser(), IsClient()]
+            return [permission() for permission in [IsTrainer, IsAdminUser, IsClient]
+                    if permission().has_permission(self.request, self)]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             if hasattr(user, 'role') and user.role == 'trainer':
                 return [IsTrainer()]
