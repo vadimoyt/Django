@@ -10,6 +10,7 @@ from .filters import TrainingFilter
 from .models import Training, Exercise, TrainingPlan, TrainingResult, Reminder
 from .serializers import TrainingSerializer, ExerciseSerializer, TrainingResultSerializer, ReminderSerializer, \
     TrainingPlanSerializer
+from .tasks import send_email_reminder
 
 
 class TrainingViewSet(viewsets.ModelViewSet):
@@ -112,6 +113,9 @@ class ReminderViewSet(viewsets.ModelViewSet):
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             if hasattr(user, 'role') and user.role == 'trainer':
                 return [IsTrainer()]
+        elif self.action == 'send_email_reminder':
+            return [permission() for permission in [IsTrainer, IsAdminUser, IsClient]
+                    if permission().has_permission(self.request, self)]
         return [IsAdminUser()]
 
     def get_queryset(self):
@@ -119,3 +123,14 @@ class ReminderViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'role') and user.role in ['client', 'trainer']:
             return self.queryset.filter(user=user)
         return self.queryset
+
+    @action(
+        detail=True,
+        methods=['post'],
+    )
+    def send_email_reminder(self, request, pk=None):
+        reminder = self.get_object()
+        send_email_reminder.delay(
+            reminder.id
+        )
+        return Response()
