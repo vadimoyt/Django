@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from celery import shared_task
 from django.core.mail import send_mail
 from django.utils.timezone import now
@@ -26,6 +28,7 @@ def send_email_reminder(reminder_id):
 
 @shared_task
 def schedule_reminder():
-    reminders = Reminder.objects.filter(sent=False, remind_at__lte=now())
+    one_hour_before = now() + timedelta(hours=1)
+    reminders = Reminder.objects.filter(sent=False, remind_at__lte=one_hour_before)
     for reminder in reminders:
         send_email_reminder.delay(reminder.id)

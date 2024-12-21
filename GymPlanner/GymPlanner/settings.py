@@ -168,7 +168,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 CELERY_BEAT_SCHEDULE = {
     'check_reminders_every_minute': {
-        'task': 'myapp.tasks.schedule_reminders',
+        'task': 'training.tasks.schedule_reminder',
         'schedule': timedelta(minutes=1),
     },
 }
