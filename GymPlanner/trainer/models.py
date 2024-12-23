@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from user.models import CustomUser
 
 
 class Trainer(models.Model):
@@ -27,6 +28,37 @@ class Trainer(models.Model):
     def __str__(self):
         return (f"First name: {self.first_name}. \n"
                 f"Last name: {self.last_name}. \n"
-                f"Age: {self.years}. \n"
-                f"Experience: {self.year_of_exp} years. \n"
-                f"BIO: {self.bio}.")
+                )
+
+
+class RatingOfTrainer(models.Model):
+    trainer = models.ForeignKey(
+        Trainer,
+        verbose_name='Trainer',
+        on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        CustomUser,
+        verbose_name='User',
+        on_delete=models.CASCADE
+    )
+    rating = models.SmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        null=False
+        )
+    review = models.TextField(
+        null=True,
+        max_length=500
+        )
+    date = models.DateField(auto_now=True, verbose_name='Time of review')
+
+    class Meta:
+        unique_together = ('trainer', 'user')
+
+    def __str__(self):
+        return (f'Review by {self.user.username} '
+                f'for {self.trainer.first_name} {self.trainer.last_name}'
+                f' - {self.rating}/10')
+
+
+

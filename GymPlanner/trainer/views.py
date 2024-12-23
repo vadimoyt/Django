@@ -1,9 +1,12 @@
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAdminUser, AllowAny
 from django.views.decorators.cache import cache_page
-from .models import Trainer
-from .serializers import TrainerSerializer
+
+from GymPlanner.permissions import IsTrainer, IsClient, IsOwnerOrAdmin
+from .models import Trainer, RatingOfTrainer
+from .serializers import TrainerSerializer, RatingSerializer
 from .filters import TrainerFilters
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -27,3 +30,19 @@ class TrainerView(viewsets.ModelViewSet):
     @method_decorator(cache_page(60))
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+
+class RatingOfTrainerView(viewsets. ModelViewSet):
+    queryset = RatingOfTrainer.objects.all()
+    serializer_class = RatingSerializer
+
+    def get_permissions(self):
+        user = self.request.user
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        elif self.action in ['create']:
+            return [IsClient()]
+        elif self.action in [ 'update', 'destroy', 'partial_update']:
+            return [IsOwnerOrAdmin()]
+        return [IsAdminUser()]
+
